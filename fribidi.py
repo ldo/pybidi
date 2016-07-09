@@ -65,7 +65,7 @@ class FRIBIDI :
     UINT8_LOCAL = ct.c_ubyte
     UINT16_LOCAL = ct.c_ushort
     UINT32_LOCAL = ct.c_uint
-    BOOLEAN_LOCAL = ct.c_bool
+    BOOLEAN_LOCAL = ct.c_int # ct.c_bool # as per glib-2.0/glib/gtypes.h
     UNICHAR_LOCAL = ct.c_uint
 
     Level = ct.c_byte
