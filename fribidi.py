@@ -810,6 +810,30 @@ fribidi.fribidi_char_set_title.restype = ct.c_char_p
 fribidi.fribidi_char_set_title.argtypes = (FRIBIDI.CharSet,)
 fribidi.fribidi_char_set_desc.restype = ct.c_char_p
 fribidi.fribidi_char_set_desc.argtypes = (FRIBIDI.CharSet,)
+fribidi.fribidi_remove_bidi_marks.restype = FRIBIDI.StrIndex
+fribidi.fribidi_remove_bidi_marks.argtyes = \
+    (
+        ct.POINTER(FRIBIDI.Char), # input string to clean
+        FRIBIDI.StrIndex, # input string length
+        ct.POINTER(FRIBIDI.StrIndex),
+          # positions_to_this -- list mapping positions to the order used in str
+        ct.POINTER(FRIBIDI.StrIndex),
+          # position_from_this_list -- list mapping positions from the order used in str
+        ct.POINTER(FRIBIDI.Level),
+          # embedding_levels -- list of embedding levels
+    )
+fribidi.fribidi_log2vis.restype = FRIBIDI.Level
+fribidi.fribidi_log2vis.argtypes = \
+    (
+        ct.POINTER(FRIBIDI.Char), # input logical string
+        FRIBIDI.StrIndex, # input string length
+        ct.POINTER(FRIBIDI.ParType), # requested and resolved paragraph base direction
+        ct.POINTER(FRIBIDI.Char), # output visual string
+        ct.POINTER(FRIBIDI.StrIndex), # output mapping from logical to visual string positions
+        ct.POINTER(FRIBIDI.StrIndex),
+          # output mapping from visual string back to the logical string positions
+        ct.POINTER(FRIBIDI.StrIndex), # output list of embedding levels
+    )
 
 #+
 # Higher-level stuff begins here
@@ -1202,4 +1226,108 @@ def char_set_desc(char_set) :
         desc
 #end char_set_desc
 
-# fribidi-deprecated.h not included
+# selected decls from fribidi-deprecated.h:
+# (No other way to get these particular items of functionality that I can see)
+
+def remove_bidi_marks(string, positions_to_this = None, position_from_this_list = None, embedding_levels = None) :
+    "removes the bidi and boundary-neutral marks out of a string\n" \
+    "and the accompanying lists. It implements rule X9 of the Unicode\n" \
+    "Bidirectional Algorithm available at\n" \
+    "http://www.unicode.org/reports/tr9/#X9, with the exception that it removes\n" \
+    "U+200E LEFT-TO-RIGHT MARK and U+200F RIGHT-TO-LEFT MARK too.\n" \
+    "\n" \
+    "If any of the input lists are None, the list is skipped. If str is the\n" \
+    "visual string, then positions_to_this is positions_L_to_V and\n" \
+    "position_from_this_list is positions_V_to_L; if str is the logical\n" \
+    "string, the other way. Moreover, the position maps should be filled with\n" \
+    "valid entries.\n" \
+    "\n" \
+    "A position map pointing to a removed character is filled with \-1. By the\n" \
+    "way, you should not use embedding_levels if str is visual string.\n" \
+    "\n" \
+    "For best results this function should be run on a whole paragraph, not\n" \
+    "lines; but feel free to do otherwise if you know what you are doing.\n" \
+    "\n" \
+    " Returns a 4-tuple, (new_string, new_positions_to_this, new_position_from_this_list, new_embedding_levels)"
+    # Original header file also says “Deprecated. Use fribidi_remove_special_chars instead.”
+    # But I cannot find this function anywhere...
+    c_string = str_to_chars(string)
+    if positions_to_this != None :
+        c_positions_to_this = seq_to_ct(positions_to_this, FRIBIDI.StrIndex)
+    else :
+        c_positions_to_this = None
+    #end if
+    if position_from_this_list != None :
+        c_position_from_this_list = seq_to_ct(position_from_this_list, FRIBIDI.StrIndex)
+    else :
+        position_from_this_list = None
+    #end if
+    if embedding_levels != None :
+        c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.StrIndex)
+    else :
+        c_embedding_levels = None
+    #end if
+    new_str_len = fribidi.fribidi_remove_bidi_marks \
+        (c_string, len(string), c_positions_to_this, c_position_from_this_list, c_embedding_levels)
+    if new_str_len < 0 :
+        raise RuntimeError("fribidi_remove_bidi_marks returned negative length")
+          # out of memory?
+    #end if
+    result = [chars_to_str(c_string[:new_str_len]), None, None, None]
+    if positions_to_this != None :
+        result[1] = tuple(c_positions_to_this)
+    #end if
+    if position_from_this_list != None :
+        result[2] = tuple(c_position_from_this_list)
+    #end if
+    if embedding_levels != None :
+        result[3] = tuple(c_embedding_levels)
+    #end if
+    return \
+        tuple(result)
+#end remove_bidi_marks
+
+def log2vis(string, pbase_dir, want_positions_L_to_V = False, want_positions_V_to_L = False, want_embedding_levels = False) :
+    "converts the logical input string to the visual output\n" \
+    "strings as specified by the Unicode Bidirectional Algorithm. As a side\n" \
+    "effect it also optionally generates mapping lists between the two strings, and\n" \
+    "the list of embedding levels as defined by the algorithm.\n" \
+    "\n" \
+    "This function is obsolete because it only handles one-line paragraphs.\n" \
+    "Please consider using other functions instead. Deprecated.\n" \
+    "\n" \
+    "Returns a 6-tuple: (Maximum level found in this line plus one, resolved paragraph base direction, visual string, optional positions_L_to_V, optional positions_V_to_L, optional embedding_levels)."
+    strlen = len(string)
+    c_string = str_to_chars(string)
+    c_vis_string = (strlen * FRIBIDI.Char)()
+    c_pbase_dir = FRIBIDI.ParType(pbase_dir)
+    c_positions_L_to_V = None
+    c_positions_V_to_L = None
+    c_embedding_levels = None
+    if want_positions_L_to_V :
+        c_positions_L_to_V = (strlen * FRIBIDI.StrIndex)()
+    #end if
+    if want_positions_V_to_L :
+        c_positions_V_to_L = (strlen * FRIBIDI.StrIndex)()
+    #end if
+    if want_embedding_levels :
+        c_embedding_levels = (strlen * FRIBIDI.StrIndex)()
+    #end if
+    max_level = fribidi.fribidi_log2vis(c_string, strlen, ct.byref(c_pbase_dir), c_vis_string, c_positions_L_to_V, c_positions_V_to_L, c_embedding_levels)
+    if max_level == 0 :
+        raise RuntimeError("fribidi_log2vis returned 0")
+          # out of memory?
+    #end if
+    result = [max_level, c_pbase_dir.value, chars_to_str(c_vis_string), None, None, None]
+    if want_positions_L_to_V :
+        result[3] = tuple(c_positions_L_to_V)
+    #end if
+    if want_positions_V_to_L :
+        result[4] = tuple(c_positions_V_to_L)
+    #end if
+    if want_embedding_levels :
+        result[5] = tuple(c_embedding_levels)
+    #end if
+    return \
+        tuple(result)
+#end log2vis
