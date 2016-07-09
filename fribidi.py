@@ -784,6 +784,16 @@ fribidi.fribidi_shape_arabic.argtypes = \
           # input/output Arabic properties as computed by fribidi_join_arabic
         ct.POINTER(FRIBIDI.Char), # string to shape
     )
+fribidi.fribidi_shape.restype = None
+fribidi.fribidi_shape.argtypes = \
+    (
+        FRIBIDI.Flags, # shaping flags
+        ct.POINTER(FRIBIDI.Level), # embedding_levels
+        FRIBIDI.StrIndex, # input string length
+        ct.POINTER(FRIBIDI.ArabicProp),
+          # input/output Arabic properties as computed by fribidi_join_arabic
+        ct.POINTER(FRIBIDI.Char), # string to shape
+    )
 
 #+
 # Higher-level stuff begins here
@@ -1095,8 +1105,31 @@ def shape_arabic(flags, embedding_levels, ar_props, string) :
         type(ar_props)(c_ar_props), chars_to_str(c_str)
 #end shape_arabic
 
+# from fribidi-shape.h:
+
+def shape(flags, embedding_levels, ar_props, string) :
+    "does all shaping work that depends on the resolved embedding\n" \
+    "levels of the characters. Currently it does mirroring and Arabic shaping,\n" \
+    "but the list may grow in the future. This function is a wrapper around\n" \
+    "fribidi_shape_mirroring and fribidi_shape_arabic.\n" \
+    "\n" \
+    "The flags parameter specifies which shapings are applied. The only flags\n" \
+    "affecting the functionality of this function are those beginning with\n" \
+    "FRIBIDI_FLAG_SHAPE_. Of these, only FRIBIDI_FLAG_SHAPE_MIRRORING is on\n" \
+    "in FRIBIDI_FLAGS_DEFAULT. For details of the Arabic-specific flags see\n" \
+    "fribidi_shape_arabic. If ar_props is NULL, no Arabic shaping is performed.\n" \
+    "\n" \
+    "Feel free to do your own shaping before or after calling this function,\n" \
+    "but you should take care of embedding levels yourself then."
+    c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
+    c_ar_props = seq_to_ct(ar_props, FRIBIDI.ArabicProp)
+    c_str = str_to_chars(string)
+    fribidi.fribidi_shape(flags, c_embedding_levels, len(string), c_ar_props, c_str)
+    return \
+        type(ar_props)(c_ar_props), chars_to_str(c_str)
+#end shape
+
 # more TBD
-#include "fribidi-shape.h"
 #include "fribidi-char-sets.h"
 # end more TBD
 
