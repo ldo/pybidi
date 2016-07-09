@@ -978,8 +978,9 @@ def get_joining_type_name(j) :
 def join_arabic(bidi_types, embedding_levels, ar_props) :
     "does the Arabic joining algorithm. Means, given Arabic\n" \
     "joining types of the characters in ar_props, this\n" \
-    "function modifies this properties to grasp the effect of neighbouring\n" \
-    "characters. You probably need this information later to do Arabic shaping.\n" \
+    "function returns a modified copy of these properties to grasp\n" \
+    "the effect of neighbouring characters. You probably need this\n" \
+    "information later to do Arabic shaping.\n" \
     "\n" \
     "This function implements rules R1 to R7 inclusive (all rules) of the Arabic\n" \
     "Cursive Joining algorithm of the Unicode standard as available at\n" \
