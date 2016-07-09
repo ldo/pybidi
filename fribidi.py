@@ -75,6 +75,7 @@ class FRIBIDI :
     CharType = ct.c_uint
     ParType = ct.c_uint
     Flags = ct.c_uint
+    JoiningType = ct.c_ubyte
 
     MAX_STRING_LENGTH = 0x7FFFFFFF
 
@@ -466,6 +467,235 @@ class FRIBIDI :
             FRIBIDI.PAR_WLTR | p & FRIBIDI.MASK_RTL
     #end WEAK_PARAGRAPH
 
+    # from fribidi-joining-types.h:
+
+    # Define bit masks that joining types are based on, each mask has
+    # only one bit set.
+
+    MASK_JOINS_RIGHT = 0x01 #  May join to right
+    MASK_JOINS_LEFT = 0x02 # May join to right
+    MASK_ARAB_SHAPES = 0x04 # May Arabic shape
+    MASK_TRANSPARENT = 0x08 # Is transparent
+    MASK_IGNORED = 0x10 # Is ignored
+    MASK_LIGATURED = 0x20 # Is ligatured
+
+    # Define values for JoiningType
+
+    # nUn-joining
+    JOINING_TYPE_U_VAL = 0
+    # Right-joining
+    JOINING_TYPE_R_VAL = MASK_JOINS_RIGHT | MASK_ARAB_SHAPES
+    # Dual-joining
+    JOINING_TYPE_D_VAL = MASK_JOINS_RIGHT | MASK_JOINS_LEFT | MASK_ARAB_SHAPES
+    # join-Causing
+    JOINING_TYPE_C_VAL = MASK_JOINS_RIGHT | MASK_JOINS_LEFT
+    # Left-joining
+    JOINING_TYPE_L_VAL = MASK_JOINS_LEFT | MASK_ARAB_SHAPES
+    # Transparent
+    JOINING_TYPE_T_VAL = MASK_TRANSPARENT | MASK_ARAB_SHAPES
+    # iGnored
+    JOINING_TYPE_G_VAL = MASK_IGNORED
+
+    JOINING_TYPE_U = JOINING_TYPE_U_VAL
+    JOINING_TYPE_R = JOINING_TYPE_R_VAL
+    JOINING_TYPE_D = JOINING_TYPE_D_VAL
+    JOINING_TYPE_C = JOINING_TYPE_C_VAL
+    JOINING_TYPE_T = JOINING_TYPE_T_VAL
+    JOINING_TYPE_L = JOINING_TYPE_L_VAL
+    JOINING_TYPE_G = JOINING_TYPE_G_VAL
+
+    # ArabicProp is essentially the same type as JoiningType, but
+    # not limited to the few values returned by fribidi_get_joining_type.
+    ArabicProp = JoiningType
+
+    # The equivalent of JoiningType values for ArabicProp
+
+    # Primary Arabic Joining Classes (Table 8-2)
+
+    def IS_JOINING_TYPE_U(p) :
+        "nUn-joining"
+        return \
+            p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED | FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT) == 0
+    #end IS_JOINING_TYPE_U
+
+    def IS_JOINING_TYPE_R(p) :
+        "Right-joining"
+        return \
+            (
+                    p
+                &
+                    (
+                        FRIBIDI.MASK_TRANSPARENT
+                    |
+                        FRIBIDI.MASK_IGNORED
+                    |
+                        FRIBIDI.MASK_JOINS_RIGHT
+                    |
+                        FRIBIDI.MASK_JOINS_LEFT
+                    )
+            ==
+                FRIBIDI.MASK_JOINS_RIGHT
+            )
+    #end IS_JOINING_TYPE_R
+
+    def IS_JOINING_TYPE_D(p) :
+        "Dual-joining"
+        return \
+            (
+                    p
+                &
+                    (
+                        FRIBIDI.MASK_TRANSPARENT
+                    |
+                        FRIBIDI.MASK_IGNORED
+                    |
+                        FRIBIDI.MASK_JOINS_RIGHT
+                    |
+                        FRIBIDI.MASK_JOINS_LEFT
+                    |
+                        FRIBIDI.MASK_ARAB_SHAPES
+                    )
+            ==
+                FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT | FRIBIDI.MASK_ARAB_SHAPES
+            )
+    #end IS_JOINING_TYPE_D
+
+    def IS_JOINING_TYPE_C(p) :
+        "join-Causing"
+        return \
+            (
+                    p
+                &
+                    (
+                        FRIBIDI.MASK_TRANSPARENT
+                    |
+                        FRIBIDI.MASK_IGNORED
+                    |
+                        FRIBIDI.MASK_JOINS_RIGHT
+                    |
+                        FRIBIDI.MASK_JOINS_LEFT
+                    |
+                        FRIBIDI.MASK_ARAB_SHAPES
+                    )
+            ==
+                FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT
+            )
+    #end IS_JOINING_TYPE_C
+
+    def IS_JOINING_TYPE_L(p) :
+        "Left-joining"
+        return \
+            (
+                    p
+                &
+                    (
+                        FRIBIDI.MASK_TRANSPARENT
+                    |
+                        FRIBIDI.MASK_IGNORED
+                    |
+                        FRIBIDI.MASK_JOINS_RIGHT
+                    |
+                        FRIBIDI.MASK_JOINS_LEFT
+                    )
+            ==
+                FRIBIDI.MASK_JOINS_LEFT
+            )
+    #end IS_JOINING_TYPE_L
+
+    def IS_JOINING_TYPE_T(p) :
+        "Transparent"
+        return \
+            (
+                p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED)
+            ==
+                FRIBIDI.MASK_TRANSPARENT
+            )
+    #end IS_JOINING_TYPE_T
+
+    def IS_JOINING_TYPE_G(p) :
+        "iGnored"
+        return \
+            (
+                p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED)
+            ==
+                FRIBIDI.MASK_IGNORED
+            )
+    #end IS_JOINING_TYPE_G
+
+    # and for Derived Arabic Joining Classes (Table 8-3)
+
+    def IS_JOINING_TYPE_RC(p) :
+        "Right join-Causing"
+        return \
+            (
+                p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED | FRIBIDI.MASK_JOINS_RIGHT)
+            ==
+                FRIBIDI.MASK_JOINS_RIGHT
+            )
+    #end IS_JOINING_TYPE_RC
+
+    def IS_JOINING_TYPE_LC(p) :
+        "Left join-Causing"
+        return \
+            (
+                p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED | FRIBIDI.MASK_JOINS_LEFT)
+            ==
+                FRIBIDI.MASK_JOINS_LEFT
+            )
+    #end IS_JOINING_TYPE_LC
+
+    # Defining macros for needed queries, It is fully dependent on the
+    # implementation of FriBidiJoiningType.
+
+    def JOINS_RIGHT(p) :
+        "Joins to right: R, D, C?"
+        return \
+            p & FRIBIDI.MASK_JOINS_RIGHT != 0
+    #end JOINS_RIGHT
+
+    def JOINS_LEFT(p) :
+        "Joins to left: L, D, C?"
+        return \
+            p & FRIBIDI.MASK_JOINS_LEFT != 0
+    #end JOINS_LEFT
+
+    def ARAB_SHAPES(p) :
+        "May shape: R, D, L, T?"
+        return \
+            p & FRIBIDI.MASK_ARAB_SHAPES != 0
+    #end ARAB_SHAPES
+
+    def IS_JOIN_SKIPPED(p) :
+        "Is skipped in joining: T, G?"
+        return \
+            p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED) != 0
+    #end IS_JOIN_SKIPPED
+
+    def IS_JOIN_BASE_SHAPES(p) :
+        "Is base that will be shaped: R, D, L?"
+        return \
+            (
+                p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED | FRIBIDI.MASK_ARAB_SHAPES)
+            ==
+                FRIBIDI.MASK_ARAB_SHAPES
+            )
+    #end IS_JOIN_BASE_SHAPES
+
+    def JOINS_PRECEDING_MASK(level) :
+        return \
+            (FRIBIDI.MASK_JOINS_LEFT, FRIBIDI.MASK_JOINS_RIGHT)[FRIBIDI.LEVEL_IS_RTL(level)]
+    #end JOINS_PRECEDING_MASK
+
+    def JOINS_FOLLOWING_MASK(level) :
+        return \
+            (FRIBIDI.MASK_JOINS_RIGHT, FRIBIDI.MASK_JOINS_LEFT)[FRIBIDI.LEVEL_IS_RTL(level)]
+    #end JOINS_FOLLOWING_MASK
+
+    def JOIN_SHAPE(p) :
+        return \
+            p & (FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT) != 0
+    #end JOIN_SHAPE
+
     # more TBD
 
 #end FRIBIDI
@@ -500,15 +730,22 @@ fribidi.fribidi_reorder_line.argtypes = \
     (
         FRIBIDI.Flags, # reorder flags
         ct.POINTER(FRIBIDI.CharType), # input list of bidi types as returned by fribidi_get_bidi_types()
-        FRIBIDI.StrIndex, # input length of the line
+        FRIBIDI.StrIndex, # input length of the paragraph
         FRIBIDI.StrIndex, # input offset of the beginning of the line in the paragraph
         FRIBIDI.ParType, # resolved paragraph base direction
         ct.POINTER(FRIBIDI.Level),
           # input list of embedding levels, as returned by fribidi_get_par_embedding_levels
-        ct.POINTER(FRIBIDI.Char), # visual string to reorder
+        ct.POINTER(FRIBIDI.Char), # paragraph visual string to reorder
         ct.POINTER(FRIBIDI.StrIndex),
           # a map of string indices which is reordered to reflect where each glyph ends up.
     )
+fribidi.fribidi_get_joining_type.restype = FRIBIDI.JoiningType
+fribidi.fribidi_get_joining_type.argtypes = (FRIBIDI.Char,)
+fribidi.fribidi_get_joining_types.restype = None
+fribidi.fribidi_get_joining_types.argtypes = \
+    (ct.POINTER(FRIBIDI.Char), FRIBIDI.StrIndex, ct.POINTER(FRIBIDI.JoiningType))
+fribidi.fribidi_get_joining_type_name.restype = ct.c_char_p
+fribidi.fribidi_get_joining_type_name.argtypes = (FRIBIDI.JoiningType,)
 
 #+
 # Higher-level stuff begins here
@@ -686,3 +923,47 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, vis
     return \
          result
 #end reorder_line
+
+# from fribidi-joining-types.h:
+
+def get_joining_type(ch) :
+    "returns the joining type of a character as defined in Table\n" \
+    "8-2 Primary Arabic Joining Classes of the Unicode standard available at\n" \
+    "http://www.unicode.org/versions/Unicode4.0.0/ch08.pdf#G7462, using data\n" \
+    "provided in file ArabicShaping.txt and UnicodeData.txt of the Unicode\n" \
+    "Character Database available at\n" \
+    "http://www.unicode.org/Public/UNIDATA/ArabicShaping.txt and\n" \
+    "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt.\n" \
+    "\n" \
+    "There are a few macros defined in FRIBIDI for querying a\n" \
+    "joining type."
+    return \
+        fribidi.fribidi_get_joining_type(ch)
+#end get_joining_type
+
+def get_joining_types(s) :
+    "finds the joining types of an string of characters. See\n" \
+    "fribidi_get_joining_type for more information about the joining types\n" \
+    "returned by this function."
+    c_str = str_to_chars(s)
+    jtypes = (len(s) * FRIBIDI.JoiningType)()
+    fribidi.fribidi_get_joining_types(c_str, len(s), jtypes)
+    return \
+        tuple(jtypes)
+#end get_joining_types
+
+def get_joining_type_name(j) :
+    "returns the joining type name of a joining type. The type names are\n" \
+    "the same as ones defined in Table 8-2  Primary Arabic\n" \
+    "Joining Classes of the Unicode standard available at\n" \
+    "http://www.unicode.org/versions/Unicode4.0.0/ch08.pdf#G7462."
+    return \
+        fribidi.fribidi_get_joining_type_name(j).decode()
+#end get_joining_type_name
+
+# more TBD
+#include "fribidi-mirroring.h"
+#include "fribidi-arabic.h"
+#include "fribidi-shape.h"
+#include "fribidi-char-sets.h"
+# end more TBD
