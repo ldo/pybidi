@@ -1010,9 +1010,9 @@ def join_arabic(bidi_types, embedding_levels, ar_props) :
     str_len = len(bidi_types)
     assert str_len == len(embedding_levels) and str_len == len(ar_props), \
         "inconsistent lengths of input sequences"
-    c_bidi_types = seq_to_ct(bidi_types)
-    c_embedding_levels = seq_to_ct(embedding_levels)
-    c_ar_props = seq_to_ct(ar_props)
+    c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
+    c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
+    c_ar_props = seq_to_ct(ar_props, FRIBIDI.ArabicProp)
     fribidi.fribidi_join_arabic(c_bidi_types, str_len, c_embedding_levels, c_ar_props)
     return \
         type(ar_props)(c_ar_props)
