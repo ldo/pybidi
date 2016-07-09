@@ -1158,7 +1158,7 @@ def charset_to_unicode(char_set, s_bytes) :
         raise IndexError("PANIC! buffer overflow!") # if I haven’t crashed first...
     #end if
     return \
-        chars_to_str(us[strlen])
+        chars_to_str(us[:strlen])
 #end charset_to_unicode
 
 def unicode_to_charset(char_set, us) :
