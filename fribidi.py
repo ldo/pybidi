@@ -769,6 +769,11 @@ fribidi.fribidi_join_arabic.argtypes = \
           # Arabic properties to analyze, initialized by joining types, as
           # returned by fribidi_get_joining_types()
     )
+fribidi.fribidi_get_mirror_char.restype = FRIBIDI.BOOLEAN_LOCAL
+fribidi.fribidi_get_mirror_char.argtypes = (FRIBIDI.Char, ct.POINTER(FRIBIDI.Char))
+fribidi.fribidi_shape_mirroring.restype = None
+fribidi.fribidi_shape_mirroring.argtypes = \
+    (ct.POINTER(FRIBIDI.Level), FRIBIDI.StrIndex, ct.POINTER(FRIBIDI.Char))
 
 #+
 # Higher-level stuff begins here
@@ -1013,8 +1018,44 @@ def join_arabic(bidi_types, embedding_levels, ar_props) :
         type(ar_props)(c_ar_props)
 #end join_arabic
 
+# from fribidi-mirroring.h:
+
+def get_mirror_char(ch) :
+    "finds the mirrored equivalent of a character as defined in\n" \
+    "the file BidiMirroring.txt of the Unicode Character Database available at\n" \
+    "http://www.unicode.org/Public/UNIDATA/BidiMirroring.txt.\n" \
+    "\n" \
+    "If the input character is a declared as a mirroring character in the\n" \
+    "Unicode standard and has a mirrored equivalent. The matching mirrored\n" \
+    "character is put in the output, otherwise the input character itself is\n" \
+    "put.\n" \
+    "\n" \
+    "Returns: the mirrored character if it exists, else None."
+    mirrored_ch = FRIBIDI.Char()
+    if fribidi.fribidi_get_mirror_char(ch, ct.byref(mirrored_ch)) :
+        result = mirrored_ch.value
+    else :
+        result = None
+    #end if
+    return \
+        result
+#end get_mirror_char
+
+def shape_mirroring(embedding_levels, string) :
+    "replaces mirroring characters on right-to-left embeddings in\n" \
+    "string with their mirrored equivalent as returned by\n" \
+    "get_mirror_char().\n" \
+    "\n" \
+    "This function implements rule L4 of the Unicode Bidirectional Algorithm\n" \
+    "available at http://www.unicode.org/reports/tr9/#L4."
+    c_embedding_levels = seq_to_ct(embedding_levels)
+    c_str = str_to_chars(string)
+    fribidi.fribidi_shape_mirroring(c_embedding_levels, len(string), c_str)
+    return \
+        chars_to_str(c_str)
+#end shape_mirroring
+
 # more TBD
-#include "fribidi-mirroring.h"
 #include "fribidi-arabic.h"
 #include "fribidi-shape.h"
 #include "fribidi-char-sets.h"
