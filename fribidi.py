@@ -17,7 +17,7 @@
 #
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
@@ -29,6 +29,23 @@
 import ctypes as ct
 
 fribidi = ct.cdll.LoadLibrary("libfribidi.so.0")
+
+def seq_to_ct(seq, ct_type, conv = None) :
+    "extracts the elements of a Python sequence value into a ctypes array" \
+    " of type ct_type, optionally applying the conv function to each value.\n" \
+    "\n" \
+    "Why doesn’t ctypes make this easy?"
+    if conv == None :
+        conv = lambda x : x
+    #end if
+    nr_elts = len(seq)
+    result = (nr_elts * ct_type)()
+    for i in range(nr_elts) :
+        result[i] = conv(seq[i])
+    #end for
+    return \
+        result
+#end seq_to_ct
 
 class FRIBIDI :
     "useful definitions adapted from fribidi/*.h. You will need to use the constants" \
@@ -57,6 +74,7 @@ class FRIBIDI :
     StrIndex = ct.c_int # unsigned?
     CharType = ct.c_uint
     ParType = ct.c_uint
+    Flags = ct.c_uint
 
     MAX_STRING_LENGTH = 0x7FFFFFFF
 
@@ -148,9 +166,9 @@ class FRIBIDI :
     MASK_SPACE = 0x00000800 # Is space: BN, BS, SS, WS
     MASK_EXPLICIT = 0x00001000 # Is explicit mark: LRE, RLE, LRO, RLO, PDF
 
-    # Can be set only if FRIBIDI_MASK_SPACE is also set.
+    # Can be set only if MASK_SPACE is also set.
     MASK_SEPARATOR = 0x00002000 # Is text separator: BS, SS
-    # Can be set only if FRIBIDI_MASK_EXPLICIT is also set.
+    # Can be set only if MASK_EXPLICIT is also set.
     MASK_OVERRIDE = 0x00004000 # Is explicit override: LRO, RLO
 
     #  The following exist to make types pairwise different, some of them can
@@ -226,10 +244,10 @@ class FRIBIDI :
     # Weak Right-To-Left
     TYPE_WRTL_VAL = MASK_WEAK | MASK_RTL
 
-    # start or end of text (run list) SENTINEL.  Only used internally
+    # start or end of text (run list) SENTINEL. Only used internally
     TYPE_SENTINEL = MASK_SENTINEL
 
-    # Private types for applications.  More private types can be obtained by
+    # Private types for applications. More private types can be obtained by
     # summing up from this one.
     TYPE_PRIVATE = MASK_PRIVATE
 
@@ -277,8 +295,8 @@ class FRIBIDI :
     #end LEVEL_TO_DIR
 
     def DIR_TO_LEVEL(dir) :
-        "returns the minimum level of the direction, 0 for FRIBIDI_TYPE_LTR and" \
-        "1 for FRIBIDI_TYPE_RTL and FRIBIDI_TYPE_AL."
+        "returns the minimum level of the direction, 0 for FRIBIDI.TYPE_LTR and" \
+        "1 for FRIBIDI.TYPE_RTL and FRIBIDI.TYPE_AL."
         return \
             (0, 1)[FRIBIDI.IS_RTL(dir)]
     #end DIR_TO_LEVEL
@@ -439,7 +457,7 @@ class FRIBIDI :
             (
                 lambda : FRIBIDI.TYPE_ON,
                 lambda : FRIBIDI.LEVEL_TO_DIR(FRIBIDI.DIR_TO_LEVEL(p)),
-            )[FRIBIDI_IS_OVERRIDE(p)]()
+            )[FRIBIDI.IS_OVERRIDE(p)]()
     #end EXPLICIT_TO_OVERRIDE_DIR
 
     def WEAK_PARAGRAPH(p) :
@@ -467,18 +485,52 @@ fribidi.fribidi_get_bidi_types.argtypes = \
     (ct.POINTER(FRIBIDI.Char), FRIBIDI.StrIndex, ct.POINTER(FRIBIDI.CharType))
 fribidi.fribidi_get_bidi_type_name.restype = ct.c_char_p
 fribidi.fribidi_get_bidi_type_name.argtypes = (FRIBIDI.CharType,)
-
-# more TBD
+fribidi.fribidi_get_par_direction.restype = FRIBIDI.ParType
+fribidi.fribidi_get_par_direction.argtypes = (ct.POINTER(FRIBIDI.CharType), FRIBIDI.StrIndex)
+fribidi.fribidi_get_par_embedding_levels.restype = FRIBIDI.Level
+fribidi.fribidi_get_par_embedding_levels.argtypes = \
+    (
+        ct.POINTER(FRIBIDI.CharType), # input list of bidi types as returned by fribidi_get_bidi_types()
+        FRIBIDI.StrIndex, # input string length of the paragraph
+        ct.POINTER(FRIBIDI.ParType), # requested and resolved paragraph base direction
+        ct.POINTER(FRIBIDI.Level), # output list of embedding levels
+    )
+fribidi.fribidi_reorder_line.restype = FRIBIDI.Level
+fribidi.fribidi_reorder_line.argtypes = \
+    (
+        FRIBIDI.Flags, # reorder flags
+        ct.POINTER(FRIBIDI.CharType), # input list of bidi types as returned by fribidi_get_bidi_types()
+        FRIBIDI.StrIndex, # input length of the line
+        FRIBIDI.StrIndex, # input offset of the beginning of the line in the paragraph
+        FRIBIDI.ParType, # resolved paragraph base direction
+        ct.POINTER(FRIBIDI.Level),
+          # input list of embedding levels, as returned by fribidi_get_par_embedding_levels
+        ct.POINTER(FRIBIDI.Char), # visual string to reorder
+        ct.POINTER(FRIBIDI.StrIndex),
+          # a map of string indices which is reordered to reflect where each glyph ends up.
+    )
 
 #+
 # Higher-level stuff begins here
 #-
 
-def unicode_version() :
+def str_to_chars(s) :
+    "returns the characters of the Python string s as a ctypes array of FRIBIDI.Char."
+    return \
+        seq_to_ct(s, FRIBIDI.Char, ord)
+#end str_to_chars
+
+def chars_to_str(s) :
+    "returns the characters of a ctypes array of FRIBIDI.Char as a Python string."
+    return \
+        "".join(chr(c) for c in s)
+#end chars_to_str
+
+def get_unicode_version() :
     "returns the supported Unicode version."
     return \
         ct.c_char_p.in_dll(fribidi, "fribidi_unicode_version").value.decode()
-#end unicode_version
+#end get_unicode_version
 
 # from fribidi-bidi-types.h:
 
@@ -500,10 +552,7 @@ def get_bidi_types(s) :
     "finds the bidi types of an string of characters. See\n" \
     "get_bidi_type() for more information about the bidi types returned\n" \
     "by this function."
-    c_str = (FRIBIDI.Char * len(s))()
-    for i in range(len(s)) :
-        c_str[i] = ord(s[i])
-    #end for
+    c_str = str_to_chars(s)
     c_result = (FRIBIDI.CharType * len(s))()
     fribidi.fribidi_get_bidi_types(c_str, len(s), c_result)
     return \
@@ -520,3 +569,120 @@ def get_bidi_type_name(t) :
     return \
         fribidi.fribidi_get_bidi_type_name(t).decode()
 #end get_bidi_type_name
+
+# from fribidi-bidi.h:
+
+def get_par_direction(bidi_types) :
+    "finds the base direction of a single paragraph,\n" \
+    "as defined by rule P2 of the Unicode Bidirectional Algorithm available at\n" \
+    "http://www.unicode.org/reports/tr9/#P2.\n" \
+    "\n" \
+    "You typically do not need this function as\n" \
+    "get_par_embedding_levels() knows how to compute base direction\n" \
+    "itself, but you may need this to implement a more sophisticated paragraph\n" \
+    "direction handling. Note that you can pass more than a paragraph to this\n" \
+    "function and the direction of the first non-neutral paragraph is returned,\n" \
+    "which is a very good heuristic to set direction of the neutral paragraphs\n" \
+    "at the beginning of text. For other neutral paragraphs, you better use the\n" \
+    "direction of the previous paragraph.\n" \
+    "\n" \
+    "Returns: Base paragraph direction. No weak paragraph direction is returned,\n" \
+    "only LTR, RTL, or ON."
+    c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
+    return \
+        fribidi.fribidi_get_par_direction(c_bidi_types, len(bidi_types))
+#end get_par_direction
+
+def get_par_embedding_levels(bidi_types, pbase_dir) :
+    "finds the bidi embedding levels of a single paragraph,\n" \
+    "as defined by the Unicode Bidirectional Algorithm available at\n" \
+    "http://www.unicode.org/reports/tr9/. This function implements rules P2 to\n" \
+    "I1 inclusive, and parts 1 to 3 of L1, except for rule X9 which is\n" \
+    "implemented in fribidi_remove_bidi_marks(). Part 4 of L1 is implemented\n" \
+    "in fribidi_reorder_line().\n" \
+    "\n" \
+    "There are a few macros defined in FRIBIDI to work with this\n" \
+    "embedding levels.\n" \
+    "\n" \
+    "Returns a 3-tuple: (Maximum level found plus one, resolved paragraph base direction," \
+    " tuple of embedding levels)."
+    nr_bidi_types = len(bidi_types)
+    c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
+    c_pbase_dir = ct.FRIBIDI.ParType(pbase_dir)
+    c_levels = (FRIBIDI.Level * nr_bidi_types)()
+    max_level = fribidi.fribidi_get_par_embedding_levels(c_bidi_types, nr_bidi_types, ct.byref(c_pbase_dir), c_levels)
+    if max_level == 0 :
+        raise RuntimeError("fribidi_get_par_embedding_levels returned 0")
+          # out of memory?
+    #end if
+    return \
+        max_level, c_pbase_dir.value, tuple(c_levels)
+#end get_par_embedding_levels
+
+def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, visual_str, map = None) :
+    "reorders the characters in a line of text from logical to\n" \
+    "final visual order. This function implements part 4 of rule L1, and rules\n" \
+    "L2 and L3 of the Unicode Bidirectional Algorithm available at\n" \
+    "http://www.unicode.org/reports/tr9/#Reordering_Resolved_Levels.\n" \
+    "As a side effect it also sets position maps if not NULL.\n" \
+    "\n" \
+    "You should provide the resolved paragraph direction and embedding levels as\n" \
+    "set by get_par_embedding_levels(). Also note that the embedding\n" \
+    "levels may change a bit. To be exact, the embedding level of any sequence\n" \
+    "of white space at the end of line is reset to the paragraph embedding level\n" \
+    "(That is part 4 of rule L1).\n" \
+    "\n" \
+    "Note that the bidi types and embedding levels are not reordered. You can\n" \
+    "reorder these (or any other) arrays using the map later. The user is\n" \
+    "responsible to initialize map to something sensible, like an identity\n" \
+    "mapping (pass a single integer to map positions to those offset by the integer),\n" \
+    "or pass None if no map is needed.\n" \
+    "\n" \
+    "There is an optional part to this function, which is whether non-spacing\n" \
+    "marks for right-to-left parts of the text should be reordered to come after\n" \
+    "their base characters in the visual string or not. Most rendering engines\n" \
+    "expect this behaviour, but console-based systems for example do not like it.\n" \
+    "This is controlled by the FRIBIDI.FLAG_REORDER_NSM flag. The flag is on\n" \
+    "in FRIBIDI.FLAGS_DEFAULT.\n" \
+    "\n" \
+    "Returns a 2- or 3-tuple: (Maximum level found in this line plus one, reordered string, reordered map if specified)"
+    para_len = len(bidi_types)
+    for seq, seq_name in \
+        (
+            (embedding_levels, "embedding_levels"),
+            (visual_str, "visual_str"),
+        ) \
+    :
+        assert para_len == len(seq), "lengths of bidi_types and {} disagree".format(seq_name)
+    #end for
+    c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
+    c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
+    c_visual_str = str_to_chars(visual_str)
+    if map != None :
+        if isinstance(map, int) :
+            c_map = (para_len * FRIBIDI.StrIndex)()
+            for i in range(para_len) :
+                c_map[i] = i + map
+            #end for
+        elif isinstance(map, (list, tuple)) :
+            assert len(map) == para_len, "length of map disagrees with para len"
+            c_map = seq_to_ct(map, FRIBIDI.StrIndex)
+        else :
+            raise TypeError("invalid type for map")
+        #end if
+    else :
+        c_map = None
+    #end if
+    max_level = fribidi.fribidi_reorder_line \
+      (flags, c_bidi_types, para_len, line_offset, base_dir, c_embedding_levels, c_visual_str, c_map)
+    if max_level == 0 :
+        raise RuntimeError("fribidi_reorder_line returned 0")
+          # out of memory?
+    #end if
+    result = (max_level, chars_to_str(c_visual_str))
+    if map != None :
+        result += (tuple(c_map),)
+    #end if
+    return \
+         result
+#end reorder_line
