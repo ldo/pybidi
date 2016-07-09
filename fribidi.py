@@ -69,18 +69,8 @@ class FRIBIDI :
     INTERFACE_VERSION = 3
     INTERFACE_VERSION_STRING = "3"
 
-    # do I need these?
-    INT8_LOCAL = ct.c_byte
-    INT16_LOCAL = ct.c_short
-    INT32_LOCAL = ct.c_int
-    UINT8_LOCAL = ct.c_ubyte
-    UINT16_LOCAL = ct.c_ushort
-    UINT32_LOCAL = ct.c_uint
-    BOOLEAN_LOCAL = ct.c_int # ct.c_bool # as per glib-2.0/glib/gtypes.h
-    UNICHAR_LOCAL = ct.c_uint
-
+    Bool = ct.c_int # as per glib-2.0/glib/gtypes.h
     Level = ct.c_byte
-    # FriBidiChar, FriBidiStrIndex, FriBidiCharType and FriBidiParType all mapped to Python int
     Char = ct.c_uint
     StrIndex = ct.c_int
     CharType = ct.c_uint
@@ -91,6 +81,7 @@ class FRIBIDI :
 
     MAX_STRING_LENGTH = 0x7FFFFFFF
 
+    # We do not support surrogates yet
     UNICODE_CHARS = 0x110000
 
     UNICODE_VERSION = "6.2.0"
@@ -780,7 +771,7 @@ fribidi.fribidi_join_arabic.argtypes = \
           # Arabic properties to analyze, initialized by joining types, as
           # returned by fribidi_get_joining_types()
     )
-fribidi.fribidi_get_mirror_char.restype = FRIBIDI.BOOLEAN_LOCAL
+fribidi.fribidi_get_mirror_char.restype = FRIBIDI.Bool
 fribidi.fribidi_get_mirror_char.argtypes = (FRIBIDI.Char, ct.POINTER(FRIBIDI.Char))
 fribidi.fribidi_shape_mirroring.restype = None
 fribidi.fribidi_shape_mirroring.argtypes = \
