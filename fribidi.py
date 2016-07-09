@@ -708,7 +708,17 @@ class FRIBIDI :
             p & (FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT) != 0
     #end JOIN_SHAPE
 
-    # more TBD
+    # from fribidi-char-sets.h:
+
+    CHAR_SET_NOT_FOUND = 0
+    CHAR_SET_UTF8 = 1
+    CHAR_SET_CAP_RTL = 2
+    CHAR_SET_ISO8859_6 = 3 # ISO8859-6 (Arabic)
+    CHAR_SET_ISO8859_8 = 4 # ISO8859-8 (Hebrew)
+    CHAR_SET_CP1255 = 5 # CP1255 (MS Hebrew/Yiddish)
+    CHAR_SET_CP1256 = 6 # CP1256 (MS Arabic)
+    CHAR_SETS_NUM_PLUS_ONE = 7
+    CHAR_SETS_NUM = CHAR_SETS_NUM_PLUS_ONE - 1
 
 #end FRIBIDI
 
@@ -795,6 +805,20 @@ fribidi.fribidi_shape.argtypes = \
           # input/output Arabic properties as computed by fribidi_join_arabic
         ct.POINTER(FRIBIDI.Char), # string to shape
     )
+fribidi.fribidi_charset_to_unicode.restype = FRIBIDI.StrIndex
+fribidi.fribidi_charset_to_unicode.argtypes = \
+    (FRIBIDI.CharSet, ct.c_char_p, FRIBIDI.StrIndex, ct.POINTER(FRIBIDI.Char))
+fribidi.fribidi_unicode_to_charset.restype = FRIBIDI.StrIndex
+fribidi.fribidi_unicode_to_charset.argtypes = \
+    (FRIBIDI.CharSet, ct.POINTER(FRIBIDI.Char), FRIBIDI.StrIndex, ct.c_char_p)
+fribidi.fribidi_parse_charset.restype = FRIBIDI.CharSet
+fribidi.fribidi_parse_charset.argtypes = (ct.c_char_p,)
+fribidi.fribidi_char_set_name.restype = ct.c_char_p
+fribidi.fribidi_char_set_name.argtypes = (FRIBIDI.CharSet,)
+fribidi.fribidi_char_set_title.restype = ct.c_char_p
+fribidi.fribidi_char_set_title.argtypes = (FRIBIDI.CharSet,)
+fribidi.fribidi_char_set_desc.restype = ct.c_char_p
+fribidi.fribidi_char_set_desc.argtypes = (FRIBIDI.CharSet,)
 
 #+
 # Higher-level stuff begins here
@@ -1130,8 +1154,61 @@ def shape(flags, embedding_levels, ar_props, string) :
         type(ar_props)(c_ar_props), chars_to_str(c_str)
 #end shape
 
-# more TBD
-#include "fribidi-char-sets.h"
-# end more TBD
+# from fribidi-char-sets.h:
+# Seems the conversion functions cannot tell me how many characters or bytes they
+# produce, I simply have to provide a large buffer and hope for the best!
+length_factor = 5 # hope this is enough...
+
+def charset_to_unicode(char_set, s_bytes) :
+    "converts a bytes value from a character set, to a Unicode string."
+    us = (len(s_bytes) * length_factor * FRIBIDI.Char)()
+    strlen = fribidi.fribidi_charset_to_unicode(char_set, s_bytes, len(s_bytes), us)
+    if strlen > len(us) :
+        raise IndexError("PANIC! buffer overflow!") # if I haven’t crashed first...
+    #end if
+    return \
+        chars_to_str(us[strlen])
+#end charset_to_unicode
+
+def unicode_to_charset(char_set, us) :
+    "converts a Unicode string to a bytes value in another character set."
+    c_us = str_to_chars(us)
+    s_bytes = (len(us) * length_factor * ct.c_char)()
+    s_len = fribidi.fribidi_unicode_to_charset(char_set, c_us, len(us), s_bytes)
+    if s_len >= len(s_bytes) :
+        raise IndexError("PANIC! buffer overflow!") # if I haven’t crashed first...
+    #end if
+    return \
+        s_bytes.value # automatically stops at NUL
+#end unicode_to_charset
+
+def parse_charset(s) :
+    "parses character set name\n" \
+    "\n" \
+    "Returns: The character set named s, or FRIBIDI.CHAR_SET_NOT_FOUND if the\n" \
+    "character set is not available."
+    c_s = s.encode()
+    return \
+        fribidi.fribidi_parse_charset(c_s)
+#end parse_charset
+
+def char_set_name(char_set) :
+    return \
+        fribidi.fribidi_char_set_name(char_set).decode()
+#end char_set_name
+
+def char_set_title(char_set) :
+    return \
+        fribidi.fribidi_char_set_title(char_set).decode()
+#end char_set_title
+
+def char_set_desc(char_set) :
+    desc = fribidi.fribidi_char_set_desc(char_set)
+    if desc != None :
+        desc = desc.decode()
+    #end if
+    return \
+        desc
+#end char_set_desc
 
 # fribidi-deprecated.h not included
