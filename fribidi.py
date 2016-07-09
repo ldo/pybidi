@@ -82,11 +82,12 @@ class FRIBIDI :
     Level = ct.c_byte
     # FriBidiChar, FriBidiStrIndex, FriBidiCharType and FriBidiParType all mapped to Python int
     Char = ct.c_uint
-    StrIndex = ct.c_int # unsigned?
+    StrIndex = ct.c_int
     CharType = ct.c_uint
     ParType = ct.c_uint
     Flags = ct.c_uint
     JoiningType = ct.c_ubyte
+    CharSet = ct.c_uint
 
     MAX_STRING_LENGTH = 0x7FFFFFFF
 
