@@ -58,6 +58,17 @@ class FRIBIDI :
     # can get prematurely disposed. Always store the object reference into a local
     # variable, and pass the value of the variable instead.
 
+    # from fribidi-config.h:
+    NAME = "GNU FriBidi"
+    BUGREPORT = "http://bugs.freedesktop.org/enter_bug.cgi?product=fribidi"
+
+    VERSION =  "0.19.7"
+    MAJOR_VERSION = 0
+    MINOR_VERSION = 19
+    MICRO_VERSION = 7
+    INTERFACE_VERSION = 3
+    INTERFACE_VERSION_STRING = "3"
+
     # do I need these?
     INT8_LOCAL = ct.c_byte
     INT16_LOCAL = ct.c_short
