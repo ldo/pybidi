@@ -746,6 +746,18 @@ fribidi.fribidi_get_joining_types.argtypes = \
     (ct.POINTER(FRIBIDI.Char), FRIBIDI.StrIndex, ct.POINTER(FRIBIDI.JoiningType))
 fribidi.fribidi_get_joining_type_name.restype = ct.c_char_p
 fribidi.fribidi_get_joining_type_name.argtypes = (FRIBIDI.JoiningType,)
+fribidi.fribidi_join_arabic.restype = None
+fribidi.fribidi_join_arabic.argtypes = \
+    (
+        ct.POINTER(FRIBIDI.CharType),
+          # input list of bidi types as returned by fribidi_get_bidi_types()
+        FRIBIDI.StrIndex, # input string length
+        ct.POINTER(FRIBIDI.Level),
+          # input list of embedding levels, as returned by fribidi_get_par_embedding_levels()
+        ct.POINTER(FRIBIDI.ArabicProp),
+          # Arabic properties to analyze, initialized by joining types, as
+          # returned by fribidi_get_joining_types()
+    )
 
 #+
 # Higher-level stuff begins here
@@ -961,9 +973,39 @@ def get_joining_type_name(j) :
         fribidi.fribidi_get_joining_type_name(j).decode()
 #end get_joining_type_name
 
+# from fribidi-joining.h:
+
+def join_arabic(bidi_types, embedding_levels, ar_props) :
+    "does the Arabic joining algorithm. Means, given Arabic\n" \
+    "joining types of the characters in ar_props, this\n" \
+    "function modifies this properties to grasp the effect of neighbouring\n" \
+    "characters. You probably need this information later to do Arabic shaping.\n" \
+    "\n" \
+    "This function implements rules R1 to R7 inclusive (all rules) of the Arabic\n" \
+    "Cursive Joining algorithm of the Unicode standard as available at\n" \
+    "http://www.unicode.org/versions/Unicode4.0.0/ch08.pdf#G7462. It also\n" \
+    "interacts correctly with the bidirection algorithm as defined in Section\n" \
+    "3.5 Shaping of the Unicode Bidirectional Algorithm available at\n" \
+    "http://www.unicode.org/reports/tr9/#Shaping.\n" \
+    "\n" \
+    "There are a few macros defined in FRIBIDI for querying the\n" \
+    "Arabic properties computed by this function."
+    str_len = len(bidi_types)
+    assert str_len == len(embedding_levels) and str_len == len(ar_props), \
+        "inconsistent lengths of input sequences"
+    c_bidi_types = seq_to_ct(bidi_types)
+    c_embedding_levels = seq_to_ct(embedding_levels)
+    c_ar_props = seq_to_ct(ar_props)
+    fribidi.fribidi_join_arabic(c_bidi_types, str_len, c_embedding_levels, c_ar_props)
+    return \
+        type(ar_props)(c_ar_props)
+#end join_arabic
+
 # more TBD
 #include "fribidi-mirroring.h"
 #include "fribidi-arabic.h"
 #include "fribidi-shape.h"
 #include "fribidi-char-sets.h"
 # end more TBD
+
+# fribidi-deprecated.h not included
