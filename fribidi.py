@@ -933,7 +933,7 @@ def get_par_embedding_levels(bidi_types, pbase_dir) :
     " tuple of embedding levels)."
     nr_bidi_types = len(bidi_types)
     c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
-    c_pbase_dir = ct.FRIBIDI.ParType(pbase_dir)
+    c_pbase_dir = FRIBIDI.ParType(pbase_dir)
     c_levels = (FRIBIDI.Level * nr_bidi_types)()
     max_level = fribidi.fribidi_get_par_embedding_levels(c_bidi_types, nr_bidi_types, ct.byref(c_pbase_dir), c_levels)
     if max_level == 0 :
