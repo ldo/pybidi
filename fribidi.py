@@ -1136,7 +1136,7 @@ def shape_arabic(flags, embedding_levels, ar_props, string) :
     "Of the above, FRIBIDI.FLAG_SHAPE_ARAB_CONSOLE is only used in special\n" \
     "cases, but the rest are recommended in any enviroment that doesn't have\n" \
     "other means for doing Arabic shaping.The set of extra flags that enable\n" \
-    "this level of Arabic support has a shortcut named FRIBIDI_FLAGS_ARABIC."
+    "this level of Arabic support has a shortcut named FRIBIDI.FLAGS_ARABIC."
     c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
     c_ar_props = seq_to_ct(ar_props, FRIBIDI.ArabicProp)
     c_str = str_to_chars(string)
@@ -1155,8 +1155,8 @@ def shape(flags, embedding_levels, ar_props, string) :
     "\n" \
     "The flags parameter specifies which shapings are applied. The only flags\n" \
     "affecting the functionality of this function are those beginning with\n" \
-    "FRIBIDI_FLAG_SHAPE_. Of these, only FRIBIDI_FLAG_SHAPE_MIRRORING is on\n" \
-    "in FRIBIDI_FLAGS_DEFAULT. For details of the Arabic-specific flags see\n" \
+    "FRIBIDI.FLAG_SHAPE_. Of these, only FRIBIDI.FLAG_SHAPE_MIRRORING is on\n" \
+    "in FRIBIDI.FLAGS_DEFAULT. For details of the Arabic-specific flags see\n" \
     "fribidi_shape_arabic. If ar_props is NULL, no Arabic shaping is performed.\n" \
     "\n" \
     "Feel free to do your own shaping before or after calling this function,\n" \
