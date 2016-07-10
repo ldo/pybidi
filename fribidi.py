@@ -944,7 +944,7 @@ def get_par_embedding_levels(bidi_types, pbase_dir) :
         max_level, c_pbase_dir.value, tuple(c_levels)
 #end get_par_embedding_levels
 
-def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, visual_str, map = None) :
+def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, logical_str, map = None) :
     "reorders the characters in a line of text from logical to\n" \
     "final visual order. This function implements part 4 of rule L1, and rules\n" \
     "L2 and L3 of the Unicode Bidirectional Algorithm available at\n" \
@@ -975,14 +975,14 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, vis
     for seq, seq_name in \
         (
             (embedding_levels, "embedding_levels"),
-            (visual_str, "visual_str"),
+            (logical_str, "logical_str"),
         ) \
     :
         assert para_len == len(seq), "lengths of bidi_types and {} disagree".format(seq_name)
     #end for
     c_bidi_types = seq_to_ct(bidi_types, FRIBIDI.CharType)
     c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
-    c_visual_str = str_to_chars(visual_str)
+    c_str = str_to_chars(logical_str)
     if map != None :
         if isinstance(map, int) :
             c_map = (para_len * FRIBIDI.StrIndex)()
@@ -999,12 +999,12 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, vis
         c_map = None
     #end if
     max_level = fribidi.fribidi_reorder_line \
-      (flags, c_bidi_types, para_len, line_offset, base_dir, c_embedding_levels, c_visual_str, c_map)
+      (flags, c_bidi_types, para_len, line_offset, base_dir, c_embedding_levels, c_str, c_map)
     if max_level == 0 :
         raise RuntimeError("fribidi_reorder_line returned 0")
           # out of memory?
     #end if
-    result = (max_level, chars_to_str(c_visual_str))
+    result = (max_level, chars_to_str(c_str))
     if map != None :
         result += (tuple(c_map),)
     #end if
