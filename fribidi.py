@@ -851,6 +851,8 @@ def chars_to_str(s) :
         "".join(chr(c) for c in s)
 #end chars_to_str
 
+# from fribidi-unicode.h:
+
 def get_unicode_version() :
     "returns the supported Unicode version."
     return \
