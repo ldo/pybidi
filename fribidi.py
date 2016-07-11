@@ -946,6 +946,95 @@ def get_par_embedding_levels(bidi_types, pbase_dir) :
         max_level, c_pbase_dir.value, tuple(c_levels)
 #end get_par_embedding_levels
 
+class Reordering :
+    "convenience class for reordering elements of a sequence."
+
+    __slots__ = \
+        (
+            "indexes", # tuple of remapped position indices
+        )
+
+    def __init__(self, length, elt_func) :
+        "length is the number of elements, and elt_func is a function which," \
+        " given each input index, returns the appropriate remapped index."
+        self.indexes = tuple(elt_func(i) for i in range(length))
+        assert set(self.indexes) == set(range(length))
+          # each possible index must occur once and only once
+    #end __init__
+
+    @classmethod
+    def identity(celf, length) :
+        "constructs an identity Reordering of the specified length." \
+        " Instead of an integer, you can pass a sequence (bytes," \
+        " list, str, tuple), and the length will be taken from" \
+        " that of the sequence."
+        if isinstance(length, (bytes, list, str, tuple)) :
+            length = len(length)
+        #end if
+        return \
+            celf(length = length, elt_func = lambda i : i)
+    #end identity
+
+    @classmethod
+    def from_seq(celf, seq) :
+        "constructs a Reordering taking its indexes from the specified sequence." \
+        " Besides a list or tuple, you can also pass a ctypes array, for example" \
+        " of FRIBIDI.StrIndex elements."
+        return \
+            celf(length = len(seq), elt_func = lambda i : seq[i])
+    #end from_seq
+
+    def __len__(self) :
+        return \
+            len(self.indexes)
+    #end __len__
+
+    def apply(self, seq, offset = 0) :
+        "applies the Reordering to the specified sequence (bytes, list, string, tuple)" \
+        " beginning at the specified offset. Any part of the sequence prior to the offset," \
+        " and beyond the length of the Reordering, remains unchanged."
+        if not isinstance(seq, (bytes, list, str, tuple)) :
+            raise TypeError("invalid type “{}” for applying Reordering".format(type(seq).__name__))
+        #end if
+        if len(seq) < offset + len(self) :
+            raise IndexError \
+              (
+                "sequence length {} is too short for my Reordering length {} at offset {}"
+                .format(len(seq), len(self), offset)
+              )
+        #end if
+        if isinstance(seq, str) :
+            seq = tuple(ord(c) for c in seq)
+            result_convert = lambda l : "".join(chr(c) for c in l)
+              # convert back to string
+        else :
+            result_convert = None
+        #end if
+        prefix = seq[:offset]
+        postfix = seq[offset + len(self):]
+        seq = seq[offset : offset + len(self)]
+        result = type(seq)(seq[self.indexes[i]] for i in range(len(self)))
+        result = prefix + result + postfix
+        if result_convert != None :
+            result = result_convert(result)
+        #end if
+        return \
+            result
+    #end apply
+
+    def to_ct(self) :
+        "returns the indexes as a ctypes array of FRIBIDI.StrIndex values."
+        return \
+            seq_to_ct(self.indexes, FRIBIDI.StrIndex)
+    #end to_ct
+
+    def __repr__(self) :
+        return \
+            "<{}>{}".format(type(self).__name__, repr(self.indexes))
+    #end __repr__
+
+#end Reordering
+
 def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, logical_str, map = None) :
     "reorders the characters in a line of text from logical to\n" \
     "final visual order. This function implements part 4 of rule L1, and rules\n" \
@@ -962,8 +1051,7 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, log
     "Note that the bidi types and embedding levels are not reordered. You can\n" \
     "reorder these (or any other) arrays using the map later. The user is\n" \
     "responsible to initialize map to something sensible, like an identity\n" \
-    "mapping (pass a single integer to map positions to those offset by the integer),\n" \
-    "or pass None if no map is needed.\n" \
+    "Reordering, or pass None if no map is needed.\n" \
     "\n" \
     "There is an optional part to this function, which is whether non-spacing\n" \
     "marks for right-to-left parts of the text should be reordered to come after\n" \
@@ -986,13 +1074,11 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, log
     c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.Level)
     c_str = str_to_chars(logical_str)
     if map != None :
-        if isinstance(map, int) :
-            c_map = (para_len * FRIBIDI.StrIndex)()
-            for i in range(para_len) :
-                c_map[i] = i + map
-            #end for
+        if isinstance(map, Reordering) :
+            assert len(map) == para_len, "length of Reordering map disagrees with para len"
+            c_map = map.to_ct()
         elif isinstance(map, (list, tuple)) :
-            assert len(map) == para_len, "length of map disagrees with para len"
+            assert len(map) == para_len, "length of map list/tuple disagrees with para len"
             c_map = seq_to_ct(map, FRIBIDI.StrIndex)
         else :
             raise TypeError("invalid type for map")
@@ -1008,7 +1094,11 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, log
     #end if
     result = (max_level, chars_to_str(c_str))
     if map != None :
-        result += (tuple(c_map),)
+        if isinstance(map, Reordering) :
+            map = Reordering.from_seq(c_map)
+        else :
+            map = type(map)(c_map)
+        result += (map,)
     #end if
     return \
          result
