@@ -1215,7 +1215,7 @@ def shape_arabic(flags, embedding_levels, ar_props, string) :
     "The actual shaping that is done depends on the flags set. Only flags\n" \
     "starting with FRIBIDI.FLAG_SHAPE_ARAB_ affect this function.\n" \
     "Currently these are:\n" \
-    " \n" \
+    "\n" \
     "* FRIBIDI.FLAG_SHAPE_MIRRORING: Do mirroring.\n" \
     "* FRIBIDI.FLAG_SHAPE_ARAB_PRES: Shape Arabic characters to their\n" \
     "               presentation form glyphs.\n" \
@@ -1340,7 +1340,7 @@ def remove_bidi_marks(string, positions_to_this = None, position_from_this_list 
     "For best results this function should be run on a whole paragraph, not\n" \
     "lines; but feel free to do otherwise if you know what you are doing.\n" \
     "\n" \
-    " Returns a 4-tuple, (new_string, new_positions_to_this, new_position_from_this_list, new_embedding_levels)"
+    "Returns a 4-tuple, (new_string, new_positions_to_this, new_position_from_this_list, new_embedding_levels)"
     # Original header file also says “Deprecated. Use fribidi_remove_special_chars instead.”
     # But I cannot find this function anywhere...
     c_string = str_to_chars(string)
