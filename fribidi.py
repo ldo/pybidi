@@ -1352,7 +1352,7 @@ def remove_bidi_marks(string, positions_to_this = None, position_from_this_list 
     if position_from_this_list != None :
         c_position_from_this_list = seq_to_ct(position_from_this_list, FRIBIDI.StrIndex)
     else :
-        position_from_this_list = None
+        c_position_from_this_list = None
     #end if
     if embedding_levels != None :
         c_embedding_levels = seq_to_ct(embedding_levels, FRIBIDI.StrIndex)
