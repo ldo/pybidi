@@ -103,5 +103,14 @@ At this point, “vis2_line” can be drawn, for example into a Cairo
 context with [Qahirah](https://github.com/ldo/qahirah), using
 an appropriate Arabic-capable font.
 
+Limitations
+===========
+
+FriBidi does its shaping by substituting the Unicode codes for
+“Presentation Forms” of the Arabic characters. Trouble is, not all
+characters that may be in Arabic script have such forms encoded--ones
+that are specific to particular non-Arabic languages might not. So the
+shaping will fail for these characters.
+
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
 2016 July 13
