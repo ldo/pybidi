@@ -1,0 +1,107 @@
+Pybidi is a high-level Python 3 binding for the [GNU
+Fribidi](https://www.fribidi.org/) library. It is implemented entirely
+in Python, using ctypes, and gives access to all of the FriBidi
+functionality that I could usefully find.
+
+Installation
+============
+
+To install PyBidi on your system, type
+
+    python3 setup.py install
+
+This will install the Python module named “fribidi”.
+
+Basic Usage
+===========
+
+All functionality comes from the one module:
+
+    import fribidi
+
+Within this, function names correspond to those in FriBidi, excluding
+the “fribidi_” prefix. For example, to call the FriBidi function
+fribidi_get_bidi_types, you use the PyBidi function fribidi.get_bidi_types.
+
+Constants and “macro” functions are available within the FRIBIDI namespace
+class:
+
+    from fribidi import \
+        FRIBIDI
+
+These omit the “FRIBIDI_” prefix. E.g. FRIBIDI.PAR_RTL is the PyBidi
+name for the FriBidi constant FRIBIDI_PAR_RTL.
+
+Where Fribidi modifies arrays that you pass in-place, PyBidi returns
+modified arrays as function results. For example, where the FriBidi
+function fribidi_get_bidi_types takes the length of the string and a
+pointer to the array in which to return the bidi_types,
+fribidi.get_bidi_types takes only the string, from which it determines
+the length of the array to allocate, the contents of which are
+returned in the function result as a tuple.
+
+For convenient application of reorderings to multiple sequences,
+PyBidi provides the Reordering class. The reorder_line function can
+construct an instance of this class, and the “apply” method of this
+class can be used on any sequence object to return a new object of the
+same type, with the elements appropriately reordered.
+
+Example Use
+===========
+
+First, some example text to be laid out:
+
+    text = "\u0627\u0644\u0642\u0627\u0647\u0631\u0629" # “al-qahirah”
+
+Next, get the bidi types and embedding levels for the text:
+
+    bidi_types = fribidi.get_bidi_types(text)
+    base_dir, embedding_levels = fribidi.get_par_embedding_levels(bidi_types, FRIBIDI.PAR_RTL)[1:]
+
+Reorder the text:
+
+    vis1_line, map = fribidi.reorder_line \
+      (
+        flags = FRIBIDI.FLAGS_DEFAULT,
+        bidi_types = bidi_types,
+        line_offset = 0,
+        base_dir = base_dir,
+        embedding_levels = embedding_levels,
+        logical_str = text,
+        map = Reordering.identity(text)
+      )[1:]
+
+This is sufficient for visual display of the text in the right order.
+But to actually render the text with the right contextual forms for
+Arabic, you need to continue...
+
+Reorder the bidi types and embedding levels to match:
+
+    vis_bidi_types = map.apply(bidi_types)
+    vis_embedding_levels = map.apply(embedding_levels)
+
+Get the joining types:
+
+    joining_types = fribidi.get_joining_types(text)
+    vis1_joining_types = fribidi.join_arabic(vis_bidi_types, vis_embedding_levels, joining_types)
+
+Reorder the joining types:
+
+    vis1_joining_types = map.apply(vis1_joining_types)
+
+Do the shaping, i.e. replacement of characters with appropriate contextual forms:
+
+    vis2_joining_types, vis2_line = fribidi.shape \
+      (
+        flags = FRIBIDI.FLAGS_ARABIC,
+        embedding_levels = vis_embedding_levels,
+        ar_props = vis1_joining_types,
+        string = vis1_line
+      )
+
+At this point, “vis2_line” can be drawn, for example into a Cairo
+context with [Qahirah](https://github.com/ldo/qahirah), using
+an appropriate Arabic-capable font.
+
+Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
+2016 July 13
