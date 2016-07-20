@@ -958,7 +958,7 @@ class Reordering :
         "length is the number of elements, and elt_func is a function which," \
         " given each input index, returns the appropriate remapped index."
         self.indexes = tuple(elt_func(i) for i in range(length))
-        assert set(self.indexes) == set(range(length))
+        assert set(self.indexes) == set(range(length)), "reordering omits or duplicates items"
           # each possible index must occur once and only once
     #end __init__
 
