@@ -984,6 +984,16 @@ class Reordering :
             celf(length = len(seq), elt_func = lambda i : seq[i])
     #end from_seq
 
+    def inverse(self) :
+        "returns the inverse of this Reordering."
+        indexes = [None] * len(self)
+        for i in range(len(self)) :
+            indexes[self.indexes[i]] = i
+        #end for
+        return \
+            type(self).from_seq(indexes)
+    #end inverse
+
     def __len__(self) :
         return \
             len(self.indexes)
