@@ -1380,7 +1380,8 @@ def remove_bidi_marks(string, positions_to_this = None, position_from_this_list 
         result[1] = tuple(c_positions_to_this)
     #end if
     if position_from_this_list != None :
-        result[2] = tuple(c_position_from_this_list)
+        result[2] = tuple(c_position_from_this_list[:new_str_len])
+          # result of array seems to be unchanged and basically meaningless now
     #end if
     if embedding_levels != None :
         result[3] = tuple(c_embedding_levels)
