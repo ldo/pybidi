@@ -112,5 +112,8 @@ characters that may be in Arabic script have such forms encoded--ones
 that are specific to particular non-Arabic languages might not. So the
 shaping will fail for these characters.
 
+To fix such problems, and implement more advanced layout, you need
+[HarfBuzz](https://github.com/ldo/harfpy).
+
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2016 July 13
+2016 August 5
