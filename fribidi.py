@@ -1434,3 +1434,43 @@ def log2vis(string, pbase_dir, want_positions_L_to_V = False, want_positions_V_t
     return \
         tuple(result)
 #end log2vis
+
+#+
+# Convenience routines
+#-
+
+def each_embedding_run(line, embedding_levels) :
+    "generator function which yields in turn each contiguous run of the string line" \
+    " which has the same embedding level. Each result is a 4-tuple:\n" \
+    "\n" \
+    "     (substr, startindex, endindex, embedding_level)\n" \
+    "\n" \
+    "where substr is line[startindex:endindex] and embedding_level is the corresponding" \
+    " embedding level for the entire substring."
+    assert len(line) == len(embedding_levels)
+    pos1 = 0
+    pos2 = 0
+    prev_level = None
+    while True :
+        if pos2 == len(line) :
+            cur_level = None
+            if prev_level == None :
+                break # zero-length string
+        else :
+            cur_level = embedding_levels[pos2]
+            if prev_level == None :
+                assert pos2 == 0
+                prev_level = cur_level
+            #end if
+        #end if
+        if cur_level != prev_level :
+            yield (line[pos1:pos2], pos1, pos2, prev_level)
+            if pos2 == len(line) :
+                break
+            prev_level = cur_level
+            pos1 = pos2
+        else :
+            pos2 += 1
+        #end if
+    #end while
+#end each_embedding_run
