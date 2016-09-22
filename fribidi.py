@@ -1050,7 +1050,7 @@ def reorder_line(flags, bidi_types, line_offset, base_dir, embedding_levels, log
     "final visual order. This function implements part 4 of rule L1, and rules\n" \
     "L2 and L3 of the Unicode Bidirectional Algorithm available at\n" \
     "http://www.unicode.org/reports/tr9/#Reordering_Resolved_Levels.\n" \
-    "As a side effect it also sets position maps if not NULL.\n" \
+    "It will also compute a new Reordering if one was passed.\n" \
     "\n" \
     "You should provide the resolved paragraph direction and embedding levels as\n" \
     "set by get_par_embedding_levels(). Also note that the embedding\n" \
