@@ -1,5 +1,5 @@
-Pybidi is a high-level Python 3 binding for the [GNU
-Fribidi](https://www.fribidi.org/) library. It is implemented entirely
+PyBidi is a high-level Python 3 binding for the [GNU
+FriBidi](https://www.fribidi.org/) library. It is implemented entirely
 in Python, using ctypes, and gives access to all of the FriBidi
 functionality that I could usefully find.
 
@@ -116,4 +116,4 @@ To fix such problems, and implement more advanced layout, you need
 [HarfBuzz](https://github.com/ldo/harfpy).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2016 August 5
+2017 April 2
