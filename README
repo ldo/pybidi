@@ -100,8 +100,9 @@ Do the shaping, i.e. replacement of characters with appropriate contextual forms
       )
 
 At this point, “vis2_line” can be drawn, for example into a Cairo
-context with [Qahirah](https://github.com/ldo/qahirah), using
-an appropriate Arabic-capable font.
+context with Qahirah ([GitLab](https://gitlab.com/ldo/qahirah),
+[GitHub](https://github.com/ldo/qahirah)), using an appropriate
+Arabic-capable font.
 
 Limitations
 ===========
@@ -113,7 +114,8 @@ that are specific to particular non-Arabic languages might not. So the
 shaping will fail for these characters.
 
 To fix such problems, and implement more advanced layout, you need
-[HarfBuzz](https://github.com/ldo/harfpy).
+HarfBuzz ([GitLab](https://gitlab.com/ldo/harfpy),
+[GitHub](https://github.com/ldo/harfpy)).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
 2017 April 2
