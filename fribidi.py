@@ -1440,7 +1440,7 @@ def log2vis(string, pbase_dir, want_positions_L_to_V = False, want_positions_V_t
 # Convenience routines
 #-
 
-def each_embedding_run(line, embedding_levels) :
+def each_embedding_run(line, embedding_levels, vis_order = True) :
     "generator function which yields in turn each contiguous run of the string line" \
     " which has the same embedding level. Each result is a 4-tuple:\n" \
     "\n" \
@@ -1465,7 +1465,11 @@ def each_embedding_run(line, embedding_levels) :
             #end if
         #end if
         if cur_level != prev_level :
-            yield (line[pos1:pos2], pos1, pos2, prev_level)
+            substr = line[pos1:pos2]
+            if not vis_order and FRIBIDI.LEVEL_IS_RTL(prev_level) :
+                substr = "".join(reversed(substr))
+            #end if
+            yield (substr, pos1, pos2, prev_level)
             if pos2 == len(line) :
                 break
             prev_level = cur_level
@@ -1501,7 +1505,7 @@ class ReorderLine :
         self.vis_embedding_levels = self.map.apply(self.embedding_levels)
     #end __init__
 
-    def each_embedding_run(self) :
+    def each_embedding_run(self, vis_order = True) :
         "generator function which yields in turn each contiguous run of the string line" \
         " which has the same embedding level. Each result is a 4-tuple:\n" \
         "\n" \
@@ -1510,7 +1514,7 @@ class ReorderLine :
         "where substr is line[startindex:endindex] and embedding_level is the corresponding" \
         " embedding level for the entire substring."
         return \
-            each_embedding_run(self.vis_line, self.vis_embedding_levels)
+            each_embedding_run(self.vis_line, self.vis_embedding_levels, vis_order)
     #end each_embedding_run
 
 #end ReorderLine
