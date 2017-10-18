@@ -12,7 +12,7 @@ import distutils.core
 distutils.core.setup \
   (
     name = "PyBidi",
-    version = "0.9",
+    version = "0.91",
     description = "language bindings for FriBidi, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",

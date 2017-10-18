@@ -60,7 +60,7 @@ Next, get the bidi types and embedding levels for the text:
 
 Reorder the text:
 
-    vis1_line, map = fribidi.reorder_line \
+    vis_line, map = fribidi.reorder_line \
       (
         flags = FRIBIDI.FLAGS_DEFAULT,
         bidi_types = bidi_types,
@@ -96,13 +96,26 @@ Do the shaping, i.e. replacement of characters with appropriate contextual forms
         flags = FRIBIDI.FLAGS_ARABIC,
         embedding_levels = vis_embedding_levels,
         ar_props = vis1_joining_types,
-        string = vis1_line
+        string = vis_line
       )
 
 At this point, “vis2_line” can be drawn, for example into a Cairo
 context with Qahirah ([GitLab](https://gitlab.com/ldo/qahirah),
 [GitHub](https://github.com/ldo/qahirah)), using an appropriate
 Arabic-capable font.
+
+Convenience Wrapper
+===================
+
+The code sequence above, up to fribidi.reorder_line() and the
+map.apply() calls, is so common that it can be wrapped up in a single
+instantiation of the ReorderLine class:
+
+    reorder = fribidi.ReorderLine(text, FRIBIDI.PAR_RTL, FRIBIDI.FLAGS_DEFAULT)
+
+From this point on, the output variables “bidi_types”, “base_dir”, “vis_line”,
+“map”, “vis_bidi_types” and “vis_embedding_levels” can be accessed as attributes
+of the “reorder” object.
 
 Limitations
 ===========
@@ -118,4 +131,4 @@ HarfBuzz ([GitLab](https://gitlab.com/ldo/harfpy),
 [GitHub](https://github.com/ldo/harfpy)).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 April 2
+2017 October 18

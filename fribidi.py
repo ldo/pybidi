@@ -712,6 +712,7 @@ class FRIBIDI :
     CHAR_SETS_NUM = CHAR_SETS_NUM_PLUS_ONE - 1
 
 #end FRIBIDI
+FB = FRIBIDI # if you prefer
 
 #+
 # Routine arg/result types
@@ -1474,3 +1475,42 @@ def each_embedding_run(line, embedding_levels) :
         #end if
     #end while
 #end each_embedding_run
+
+class ReorderLine :
+    "convenience wrapper for a common use case: reorder a line of text and" \
+    " extract the embedding runs. Instantiate with the text line to be processed" \
+    " and the base direction (FRIBIDI.PAR_LTR or FRIBIDI.PAR_RTL). Then call the" \
+    " each_embedding_run() method to iterate over the embedding runs."
+
+    def __init__(self, text_line, base_dir, flags = FRIBIDI.FLAGS_DEFAULT) :
+        self.text_line = text_line
+        self.bidi_types = get_bidi_types(text_line)
+        self.base_dir, self.embedding_levels = \
+            get_par_embedding_levels(self.bidi_types, base_dir)[1:]
+        self.vis_line, self.map = reorder_line \
+          (
+            flags = flags,
+            bidi_types = self.bidi_types,
+            line_offset = 0,
+            base_dir = self.base_dir,
+            embedding_levels = self.embedding_levels,
+            logical_str = text_line,
+            map = Reordering.identity(text_line)
+          )[1:]
+        self.vis_bidi_types = self.map.apply(self.bidi_types)
+        self.vis_embedding_levels = self.map.apply(self.embedding_levels)
+    #end __init__
+
+    def each_embedding_run(self) :
+        "generator function which yields in turn each contiguous run of the string line" \
+        " which has the same embedding level. Each result is a 4-tuple:\n" \
+        "\n" \
+        "     (substr, startindex, endindex, embedding_level)\n" \
+        "\n" \
+        "where substr is line[startindex:endindex] and embedding_level is the corresponding" \
+        " embedding level for the entire substring."
+        return \
+            each_embedding_run(self.vis_line, self.vis_embedding_levels)
+    #end each_embedding_run
+
+#end ReorderLine
