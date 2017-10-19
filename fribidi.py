@@ -1440,7 +1440,7 @@ def log2vis(string, pbase_dir, want_positions_L_to_V = False, want_positions_V_t
 # Convenience routines
 #-
 
-def each_embedding_run(vis_line, embedding_levels, base_dir, vis_order) :
+def each_embedding_run(vis_line, embedding_levels, vis_order) :
     "Generator function which yields in turn each contiguous run of the string" \
     " vis_line (previously reordered by FriBidi) which has the same embedding" \
     " level. Each result is a 4-tuple:\n" \
@@ -1449,70 +1449,40 @@ def each_embedding_run(vis_line, embedding_levels, base_dir, vis_order) :
     "\n" \
     "where substr is vis_line[startindex:endindex] and embedding_level is the" \
     " corresponding embedding level for the entire substring. The segments" \
-    " are returned (and arranged) in visual order if vis_order, else they" \
-    " are converted to logical order."
+    " are always returned in visual order (for rendering in turn left-to-right)," \
+    " and internally in visual order if vis_order, else they are internally" \
+    " rearranged to logical order (which is what HarfBuzz wants for shaping," \
+    " for example)."
     assert len(vis_line) == len(embedding_levels)
-    if not vis_order and FRIBIDI.LEVEL_IS_RTL(base_dir) :
-        # undo FriBidi reordering at inter-run level
-        pos1 = pos2 = len(vis_line)
-        prev_level = None
-        while True :
-            if pos2 == 0 :
-                cur_level = None
-                if prev_level == None :
-                    break # zero-length string
-            else :
-                pos2 -= 1
-                cur_level = embedding_levels[pos2]
-                if prev_level == None :
-                    assert pos2 + 1 == len(vis_line)
-                    prev_level = cur_level
-                #end if
-            #end if
-            if cur_level != prev_level :
-                substr = vis_line[pos2:pos1]
-                if FRIBIDI.LEVEL_IS_RTL(prev_level) :
-                    # undo FriBidi reordering at intra-run level
-                    substr = "".join(reversed(substr))
-                #end if
-                yield (substr, pos2, pos1, prev_level)
-                if pos2 == 0 :
-                    break
+    pos1 = pos2 = 0
+    prev_level = None
+    while True :
+        if pos2 == len(vis_line) :
+            cur_level = None
+            if prev_level == None :
+                break # zero-length string
+        else :
+            cur_level = embedding_levels[pos2]
+            if prev_level == None :
+                assert pos2 == 0
                 prev_level = cur_level
-                pos1 = pos2
             #end if
-        #end while
-    else :
-        pos1 = pos2 = 0
-        prev_level = None
-        while True :
+        #end if
+        if cur_level != prev_level :
+            substr = vis_line[pos1:pos2]
+            if not vis_order and FRIBIDI.LEVEL_IS_RTL(prev_level) :
+                # undo FriBidi reordering at intra-run level
+                substr = "".join(reversed(substr))
+            #end if
+            yield (substr, pos1, pos2, prev_level)
             if pos2 == len(vis_line) :
-                cur_level = None
-                if prev_level == None :
-                    break # zero-length string
-            else :
-                cur_level = embedding_levels[pos2]
-                if prev_level == None :
-                    assert pos2 == 0
-                    prev_level = cur_level
-                #end if
-            #end if
-            if cur_level != prev_level :
-                substr = vis_line[pos1:pos2]
-                if not vis_order and FRIBIDI.LEVEL_IS_RTL(prev_level) :
-                    # undo FriBidi reordering at intra-run level
-                    substr = "".join(reversed(substr))
-                #end if
-                yield (substr, pos1, pos2, prev_level)
-                if pos2 == len(vis_line) :
-                    break
-                prev_level = cur_level
-                pos1 = pos2
-            else :
-                pos2 += 1
-            #end if
-        #end while
-    #end if
+                break
+            prev_level = cur_level
+            pos1 = pos2
+        else :
+            pos2 += 1
+        #end if
+    #end while
 #end each_embedding_run
 
 class ReorderLine :
@@ -1549,7 +1519,7 @@ class ReorderLine :
         "where substr is line[startindex:endindex] and embedding_level is the corresponding" \
         " embedding level for the entire substring."
         return \
-            each_embedding_run(self.vis_line, self.vis_embedding_levels, self.base_dir, vis_order)
+            each_embedding_run(self.vis_line, self.vis_embedding_levels, vis_order)
     #end each_embedding_run
 
 #end ReorderLine
