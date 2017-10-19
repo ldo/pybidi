@@ -1441,8 +1441,8 @@ def log2vis(string, pbase_dir, want_positions_L_to_V = False, want_positions_V_t
 #-
 
 def each_embedding_run(vis_line, embedding_levels, base_dir, vis_order) :
-    "generator function which yields in turn each contiguous run of the string" \
-    " vis_line (previously reordered by FriBid) which has the same embedding" \
+    "Generator function which yields in turn each contiguous run of the string" \
+    " vis_line (previously reordered by FriBidi) which has the same embedding" \
     " level. Each result is a 4-tuple:\n" \
     "\n" \
     "     (substr, startindex, endindex, embedding_level)\n" \
