@@ -27,8 +27,14 @@
 #-
 
 import ctypes as ct
+import sys
 
-fribidi = ct.cdll.LoadLibrary("libfribidi.so.0")
+if sys.platform == 'win32':
+    fribidi = ct.cdll.LoadLibrary("libfribidi-0.dll")
+elif sys.platform == 'darwin':
+    fribidi = ct.cdll.LoadLibrary("libfribidi.0.dylib")
+else:
+    fribidi = ct.cdll.LoadLibrary("libfribidi.so.0")
 
 def seq_to_ct(seq, ct_type, conv = None) :
     "extracts the elements of a Python sequence value into a ctypes array" \
