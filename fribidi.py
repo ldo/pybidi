@@ -160,7 +160,7 @@ class FRIBIDI :
     MASK_STRONG = 0x00000010 # Is strong
     MASK_WEAK = 0x00000020 # Is weak
     MASK_NEUTRAL = 0x00000040 # Is neutral
-    MASK_SENTINEL = 0x00000080 # s sentinel
+    MASK_SENTINEL = 0x00000080 # Is sentinel
     # Sentinels are not valid chars, just identify the start/end of strings.
 
     # Each char can be only one of the five following.
