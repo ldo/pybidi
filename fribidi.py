@@ -518,7 +518,21 @@ class FRIBIDI :
     def IS_JOINING_TYPE_U(p) :
         "nUn-joining"
         return \
-            p & (FRIBIDI.MASK_TRANSPARENT | FRIBIDI.MASK_IGNORED | FRIBIDI.MASK_JOINS_RIGHT | FRIBIDI.MASK_JOINS_LEFT) == 0
+            (
+                    p
+                &
+                    (
+                        FRIBIDI.MASK_TRANSPARENT
+                    |
+                        FRIBIDI.MASK_IGNORED
+                    |
+                        FRIBIDI.MASK_JOINS_RIGHT
+                    |
+                        FRIBIDI.MASK_JOINS_LEFT
+                    )
+            ==
+                0
+            )
     #end IS_JOINING_TYPE_U
 
     def IS_JOINING_TYPE_R(p) :
