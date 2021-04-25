@@ -879,7 +879,7 @@ def get_unicode_version() :
 def get_bidi_type(ch) :
     "returns the bidi type of a character as defined in Table 3.7\n" \
     "Bidirectional Character Types of the Unicode Bidirectional Algorithm\n" \
-    "available at\n"
+    "available at\n" \
     "http://www.unicode.org/reports/tr9/#Bidirectional_Character_Types, using\n" \
     "data provided in file UnicodeData.txt of the Unicode Character Database\n" \
     "available at http://www.unicode.org/Public/UNIDATA/UnicodeData.txt.\n" \
