@@ -68,7 +68,7 @@ Reorder the text:
         base_dir = base_dir,
         embedding_levels = embedding_levels,
         logical_str = text,
-        map = Reordering.identity(text)
+        map = fribidi.Reordering.identity(text)
       )[1:]
 
 This is sufficient for visual display of the text in the right order.
