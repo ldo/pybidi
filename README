@@ -101,7 +101,7 @@ Do the shaping, i.e. replacement of characters with appropriate contextual forms
 
 At this point, “vis2_line” can be drawn, for example into a Cairo
 context with Qahirah ([GitLab](https://gitlab.com/ldo/qahirah),
-[GitHub](https://github.com/ldo/qahirah)), using an appropriate
+[BitBucket](https://bitbucket.org/ldo17/qahirah)), using an appropriate
 Arabic-capable font.
 
 Convenience Wrapper
@@ -128,7 +128,7 @@ shaping will fail for these characters.
 
 To fix such problems, and implement more advanced layout, you need
 HarfBuzz ([GitLab](https://gitlab.com/ldo/harfpy),
-[GitHub](https://github.com/ldo/harfpy)).
+[BitBucket](https://bitbucket.org/ldo17/harfpy)).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 October 18
+2023 September 28

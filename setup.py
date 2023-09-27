@@ -18,6 +18,6 @@ setuptools.setup \
     description = "language bindings for FriBidi, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
-    url = "https://github.com/ldo/pybidi",
+    url = "https://gitlab.com/ldo/pybidi",
     py_modules = ["fribidi"],
   )
